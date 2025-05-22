@@ -9,10 +9,15 @@ import {
   LogOut,
   BookOpen
 } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
+import { NavigationEventDetail } from '../types'; // Import the new type
 
 const Sidebar: React.FC = () => {
-  const navigate = (page: string) => {
-    const event = new CustomEvent('navigate', { detail: { page } });
+  const { disconnect } = useAppContext();
+  // Updated navigate function to use the new typed event
+  const navigate = (pageName: string, params?: Record<string, string | boolean>) => {
+    const detail: NavigationEventDetail = { page: pageName, params };
+    const event = new CustomEvent('navigate', { detail });
     window.dispatchEvent(event);
   };
 
@@ -76,13 +81,22 @@ const Sidebar: React.FC = () => {
       <div className="pt-4 mt-6 border-t border-[#2D4E6E]">
         <ul className="space-y-2">
           <li>
-            <button className="w-full flex items-center px-4 py-3 rounded-lg hover:bg-[#2D4E6E] transition-colors">
+            <button 
+              onClick={() => navigate('settings')}
+              className="w-full flex items-center px-4 py-3 rounded-lg hover:bg-[#2D4E6E] transition-colors"
+            >
               <Settings className="h-5 w-5 mr-3" />
               <span>Settings</span>
             </button>
           </li>
           <li>
-            <button className="w-full flex items-center px-4 py-3 rounded-lg hover:bg-[#2D4E6E] transition-colors text-red-300">
+            <button 
+              onClick={() => {
+                disconnect();
+                navigate('connect');
+              }}
+              className="w-full flex items-center px-4 py-3 rounded-lg hover:bg-[#2D4E6E] transition-colors text-red-300"
+            >
               <LogOut className="h-5 w-5 mr-3" />
               <span>Disconnect</span>
             </button>

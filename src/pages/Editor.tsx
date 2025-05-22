@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Save, ArrowLeft, Check, Undo, Wand2, RefreshCcw } from 'lucide-react';
+import { Save, ArrowLeft, Check, Wand2, RefreshCcw, Bold, Italic, Underline } from 'lucide-react';
 
 interface EditorProps {
   navigate: (page: string) => void;
+  page: string; // Added page prop to receive the full page string including query params
 }
 
-const Editor: React.FC<EditorProps> = ({ navigate }) => {
-  const { articles, categories, updateArticle, analyzeWithAI } = useAppContext();
-  const [article, setArticle] = useState(articles[0] || null);
+const Editor: React.FC<EditorProps> = ({ navigate, page }) => {
+  const { articles, categories, updateArticle, addArticle, analyzeWithAI } = useAppContext(); // Added addArticle
+  const [article, setArticle] = useState<any>(null); // Changed to any to allow new article structure
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -16,19 +17,51 @@ const Editor: React.FC<EditorProps> = ({ navigate }) => {
   const [spellCheckResults, setSpellCheckResults] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
+  const [isNewArticle, setIsNewArticle] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
-    if (article) {
-      setTitle(article.title);
-      setContent(article.content);
-      setCategoryId(article.categoryId || '');
+    const isNew = page.includes('?new=true');
+    setIsNewArticle(isNew);
+
+    if (isNew) {
+      const newArticle = {
+        id: Date.now().toString(),
+        title: '',
+        content: '',
+        categoryId: '',
+        isEdited: true, // Mark as edited to differentiate from empty raw articles
+        author: 'Current User',
+        publishDate: new Date().toISOString().split('T')[0],
+        tags: [],
+        status: 'draft',
+        wordCount: 0,
+        readingTime: 0,
+        coverImage: '',
+        lastEdited: new Date().toISOString().split('T')[0],
+        spellChecked: false,
+      };
+      setArticle(newArticle);
+      setTitle(newArticle.title);
+      setContent(newArticle.content);
+      setCategoryId(newArticle.categoryId);
+    } else {
+      // Existing logic: load the first article or a selected one (not fully implemented yet)
+      // For now, it defaults to articles[0] if available
+      const currentArticle = articles[0] || null;
+      setArticle(currentArticle);
+      if (currentArticle) {
+        setTitle(currentArticle.title);
+        setContent(currentArticle.content);
+        setCategoryId(currentArticle.categoryId || '');
+      }
     }
-  }, [article]);
-  
-  if (!article) {
+  }, [page, articles]); // Add articles to dependency array for existing logic
+
+  if (!article && !isNewArticle) { // Keep this check for the case where articles[0] is null and not a new article
     return (
       <div className="p-8 text-center">
-        <p>No article selected. Please select an article from the articles page.</p>
+        <p>No article available to display. Try creating a new one.</p>
         <button
           onClick={() => navigate('articles')}
           className="mt-4 px-4 py-2 bg-[#1A365D] text-white rounded-lg hover:bg-[#2D4E6E] transition-colors"
@@ -47,18 +80,38 @@ const Editor: React.FC<EditorProps> = ({ navigate }) => {
   
   const handleSave = () => {
     setIsSaving(true);
-    
+
+    const articleData = {
+      title,
+      content,
+      categoryId: categoryId || undefined,
+      isEdited: true,
+      lastEdited: new Date().toISOString().split('T')[0],
+      // Retain other fields from the existing article state
+      author: article.author,
+      publishDate: article.publishDate,
+      tags: article.tags,
+      status: article.status,
+      wordCount: content.split(/\s+/).filter(Boolean).length, // basic word count
+      readingTime: Math.ceil(content.split(/\s+/).filter(Boolean).length / 200), // basic reading time
+      coverImage: article.coverImage,
+      spellChecked: article.spellChecked,
+    };
+
     setTimeout(() => {
-      updateArticle(article.id, {
-        title,
-        content,
-        categoryId: categoryId || undefined,
-        isEdited: true,
-        lastEdited: new Date().toISOString().split('T')[0]
-      });
-      
+      if (isNewArticle) {
+        addArticle({ ...articleData, id: article.id });
+        setIsNewArticle(false); // After saving, it's no longer a "new" article in this state
+        // Update the article state to reflect the saved article, including any generated fields
+        setArticle(prev => ({...prev, ...articleData}));
+        alert('New article saved successfully!');
+      } else {
+        updateArticle(article.id, articleData);
+        // Update the article state to reflect the saved article
+        setArticle(prev => ({...prev, ...articleData}));
+        alert('Article updated successfully!');
+      }
       setIsSaving(false);
-      alert('Article saved successfully!');
     }, 1000);
   };
   
@@ -92,6 +145,47 @@ const Editor: React.FC<EditorProps> = ({ navigate }) => {
     setSpellCheckActive(false);
     setSpellCheckResults([]);
     alert('Spell check completed and applied!');
+  };
+
+  const applyFormat = (formatType: 'bold' | 'italic' | 'underline') => {
+    if (textareaRef.current) {
+      const { selectionStart, selectionEnd, value } = textareaRef.current;
+      const selectedText = value.substring(selectionStart, selectionEnd);
+
+      if (!selectedText) return; // No text selected, do nothing
+
+      let tagStart = '';
+      let tagEnd = '';
+
+      switch (formatType) {
+        case 'bold':
+          tagStart = '<strong>';
+          tagEnd = '</strong>';
+          break;
+        case 'italic':
+          tagStart = '<em>';
+          tagEnd = '</em>';
+          break;
+        case 'underline':
+          tagStart = '<u>';
+          tagEnd = '</u>';
+          break;
+      }
+
+      const newContent = 
+        value.substring(0, selectionStart) +
+        tagStart +
+        selectedText +
+        tagEnd +
+        value.substring(selectionEnd);
+      
+      setContent(newContent);
+
+      // Optionally, focus the textarea and set the cursor position after the inserted tag
+      // This is a bit more complex and might be skipped for simplicity
+      // textareaRef.current.focus();
+      // textareaRef.current.setSelectionRange(selectionStart + tagStart.length, selectionEnd + tagStart.length);
+    }
   };
   
   return (
@@ -165,7 +259,7 @@ const Editor: React.FC<EditorProps> = ({ navigate }) => {
       
       <div className="flex-1 p-8 overflow-auto">
         <div className="max-w-4xl mx-auto">
-          {article.aiAnalysis && (
+          {article && article.aiAnalysis && (
             <div className="mb-6 bg-purple-50 rounded-lg p-4 border border-purple-200">
               <h3 className="text-lg font-semibold text-purple-800 mb-3">AI Analysis Results</h3>
               <div className="space-y-4">
@@ -259,20 +353,27 @@ const Editor: React.FC<EditorProps> = ({ navigate }) => {
               </div>
             ) : null}
             <div className="border border-gray-300 rounded-md overflow-hidden">
-              <div className="bg-gray-100 px-4 py-2 border-b border-gray-300 flex space-x-2">
-                <button className="p-1 hover:bg-gray-200 rounded">
-                  <RefreshCcw className="h-4 w-4" />
+              <div className="bg-gray-100 px-4 py-2 border-b border-gray-300 flex space-x-2 items-center">
+                <button onClick={() => {/* Placeholder for other actions like undo/redo */}} className="p-1 hover:bg-gray-200 rounded" title="Refresh/Clear (Not Implemented)">
+                  <RefreshCcw className="h-4 w-4 text-gray-600" />
                 </button>
-                <div className="h-6 border-r border-gray-300 mx-1"></div>
-                <button className="p-1 hover:bg-gray-200 rounded">B</button>
-                <button className="p-1 hover:bg-gray-200 rounded">I</button>
-                <button className="p-1 hover:bg-gray-200 rounded">U</button>
+                <div className="h-5 border-r border-gray-300 mx-1"></div>
+                <button onClick={() => applyFormat('bold')} className="p-1 hover:bg-gray-200 rounded" title="Bold">
+                  <Bold className="h-4 w-4 text-gray-600" />
+                </button>
+                <button onClick={() => applyFormat('italic')} className="p-1 hover:bg-gray-200 rounded" title="Italic">
+                  <Italic className="h-4 w-4 text-gray-600" />
+                </button>
+                <button onClick={() => applyFormat('underline')} className="p-1 hover:bg-gray-200 rounded" title="Underline">
+                  <Underline className="h-4 w-4 text-gray-600" />
+                </button>
               </div>
               <textarea
+                ref={textareaRef}
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full px-4 py-3 min-h-[400px] focus:outline-none focus:ring-[#319795] focus:border-[#319795]"
+                className="w-full px-4 py-3 min-h-[400px] focus:outline-none focus:ring-0 border-0" // Removed ring/border for cleaner look with toolbar
                 placeholder="Write your content here..."
               />
             </div>
@@ -284,10 +385,10 @@ const Editor: React.FC<EditorProps> = ({ navigate }) => {
           <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
             <div>
               <p className="text-sm text-gray-500">
-                Last edited: {article.lastEdited || 'Never'}
+                Last edited: {(article && article.lastEdited) || 'Never'}
               </p>
               <p className="text-sm text-gray-500">
-                {article.spellChecked ? 'Spell-checked' : 'Not spell-checked'}
+                {(article && article.spellChecked) ? 'Spell-checked' : 'Not spell-checked'}
               </p>
             </div>
             <div className="flex space-x-4">
