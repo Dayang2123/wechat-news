@@ -22,19 +22,13 @@ export interface Category {
 }
 
 export interface AIAnalysis {
-  sentiment: 'positive' | 'neutral' | 'negative';
-  readabilityScore: number;
-  suggestedTitle?: string;
-  suggestedCategories: string[];
-  grammarCorrections: GrammarCorrection[];
-  contentSuggestions: string[];
-}
-
-export interface GrammarCorrection {
-  original: string;
-  suggestion: string;
-  context: string;
-  reason: string;
+  sentiment: 'positive' | 'negative' | 'neutral' | string; // Allow string for more flexibility
+  readabilityScore: number; // 0-100, might be hard to get accurately without specific model/prompt
+  suggestedTitle: string;
+  // suggestedCategories?: string[]; // Comment out or remove as it's harder
+  contentSuggestions: string[]; // For bullet points or raw response
+  // grammarCorrections?: Array<{ original: string; suggestion: string; context?: string; reason?: string }>; // Comment out or remove
+  rawResponse?: string; // Good for debugging and initial display
 }
 
 export interface AIProvider {
@@ -42,3 +36,11 @@ export interface AIProvider {
   apiKey: string;
   enabled: boolean;
 }
+
+// Navigation Event Types
+export interface NavigationEventDetail {
+  page: string;
+  params?: Record<string, string | boolean>;
+}
+
+export type NavigateEvent = CustomEvent<NavigationEventDetail>;

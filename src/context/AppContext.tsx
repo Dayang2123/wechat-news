@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Article, Category, AIProvider } from '../types';
+import { Article, Category, AIProvider, AIAnalysis } from '../types';
 import { mockArticles, mockCategories } from '../data/mockData';
+import OpenAI from 'openai';
 
 interface AppContextType {
   isConnected: boolean;
@@ -107,31 +108,112 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const analyzeWithAI = async (articleId: string) => {
     const article = articles.find(a => a.id === articleId);
-    if (!article) return;
+    if (!article) {
+      console.error("Article not found for AI analysis");
+      return;
+    }
 
-    // Simulate AI analysis
-    const mockAnalysis = {
-      sentiment: 'positive' as const,
-      readabilityScore: 85,
-      suggestedTitle: `改进: ${article.title}`,
-      suggestedCategories: ['tech', 'tutorial'],
-      grammarCorrections: [
-        {
-          original: '成熟',
-          suggestion: '成书',
-          context: '...帮助读者更好地理解和掌握...',
-          reason: '在此上下文中，"成书"更符合文章主题'
-        }
-      ],
-      contentSuggestions: [
-        '考虑添加更多实际案例',
-        '建议增加图表说明',
-        '可以补充相关参考资料'
-      ]
-    };
+    const openAIProvider = aiProviders.find(p => p.name === 'OpenAI');
 
-    // Update article with AI analysis
-    updateArticle(articleId, { aiAnalysis: mockAnalysis });
+    if (!openAIProvider || !openAIProvider.enabled || !openAIProvider.apiKey) {
+      console.log('OpenAI provider not enabled or API key not set. Falling back to mock analysis.');
+      // Fallback to mock analysis (or do nothing)
+      const mockAnalysis: AIAnalysis = {
+        sentiment: 'neutral',
+        readabilityScore: 0,
+        suggestedTitle: `Mock: ${article.title}`,
+        contentSuggestions: ['OpenAI not configured. This is mock data.'],
+        rawResponse: 'OpenAI provider not configured. Displaying mock data.',
+      };
+      updateArticle(articleId, { aiAnalysis: mockAnalysis });
+      return;
+    }
+
+    const openai = new OpenAI({ apiKey: openAIProvider.apiKey, dangerouslyAllowBrowser: true });
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: `Analyze the following article content:
+
+"${article.content}"
+
+Please provide the following:
+1.  Suggested Title: (a concise, engaging title for this article)
+2.  Readability Score: (a score from 0 to 100, where 100 is very readable)
+3.  Sentiment: (positive, negative, or neutral)
+4.  Content Improvement Suggestions: (3-5 bullet points for how to improve the content)
+
+Format your response clearly with each item on a new line, like this:
+Suggested Title: Your New Title Here
+Readability Score: 85
+Sentiment: positive
+Content Improvement Suggestions:
+- Suggestion 1
+- Suggestion 2
+- Suggestion 3`
+        }],
+      });
+
+      const analysisResult = completion.choices[0]?.message?.content || "";
+      
+      // Basic parsing - this is fragile and depends on the AI's output format
+      let suggestedTitle = article.title;
+      let readabilityScore = 0;
+      let sentiment: AIAnalysis['sentiment'] = 'neutral';
+      let contentSuggestions: string[] = [];
+
+      const lines = analysisResult.split('\n');
+      
+      const titleLine = lines.find(l => l.toLowerCase().startsWith("suggested title:"));
+      if (titleLine) {
+        suggestedTitle = titleLine.substring("suggested title:".length).trim();
+      }
+
+      const scoreLine = lines.find(l => l.toLowerCase().startsWith("readability score:"));
+      if (scoreLine) {
+        readabilityScore = parseInt(scoreLine.substring("readability score:".length).trim()) || 0;
+      }
+      
+      const sentimentLine = lines.find(l => l.toLowerCase().startsWith("sentiment:"));
+      if (sentimentLine) {
+        sentiment = sentimentLine.substring("sentiment:".length).trim().toLowerCase() as AIAnalysis['sentiment'];
+      }
+
+      const suggestionsStartIndex = lines.findIndex(l => l.toLowerCase().startsWith("content improvement suggestions:"));
+      if (suggestionsStartIndex !== -1) {
+        contentSuggestions = lines.slice(suggestionsStartIndex + 1)
+                                .filter(l => l.trim().startsWith('-'))
+                                .map(l => l.trim().substring(1).trim());
+      }
+      
+      if (contentSuggestions.length === 0 && analysisResult) {
+        // If specific parsing fails, put the whole raw response as a suggestion
+        contentSuggestions.push("Could not parse specific suggestions. Raw AI response below:");
+        contentSuggestions.push(analysisResult);
+      }
+
+
+      const parsedAnalysis: AIAnalysis = {
+        suggestedTitle,
+        readabilityScore,
+        sentiment,
+        contentSuggestions,
+        rawResponse: analysisResult,
+      };
+      updateArticle(articleId, { aiAnalysis: parsedAnalysis });
+
+    } catch (error) {
+      console.error("Error calling OpenAI API:", error);
+      const errorAnalysis: AIAnalysis = {
+        sentiment: 'neutral',
+        readabilityScore: 0,
+        suggestedTitle: article.title,
+        contentSuggestions: ['Error during AI analysis. Please check console.'],
+        rawResponse: error instanceof Error ? error.message : String(error),
+      };
+      updateArticle(articleId, { aiAnalysis: errorAnalysis });
+    }
   };
 
   const updateAIProvider = (provider: AIProvider) => {

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Search, Edit2, Trash2, RefreshCw, Check, X } from 'lucide-react';
+import { Search, Edit2, Trash2, Check, X } from 'lucide-react'; // Removed RefreshCw as it's unused
 
 interface ArticlesProps {
-  navigate: (page: string) => void;
+  // The navigate function prop now matches the updated signature from Router.tsx
+  navigate: (pageName: string, params?: Record<string, string | boolean>) => void;
 }
 
 const Articles: React.FC<ArticlesProps> = ({ navigate }) => {
@@ -27,7 +28,8 @@ const Articles: React.FC<ArticlesProps> = ({ navigate }) => {
   
   const handleEditArticle = (articleId: string) => {
     // In a real app, we would set the current article in state and navigate to editor
-    navigate('editor');
+    // For now, just navigate to editor. If we need to pass articleId, that's a separate enhancement.
+    navigate('editor'); 
   };
   
   const handleDeleteArticle = (articleId: string) => {
@@ -45,7 +47,7 @@ const Articles: React.FC<ArticlesProps> = ({ navigate }) => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Articles</h1>
         <button
-          onClick={() => navigate('editor')}
+          onClick={() => navigate('editor', { new: 'true' })} // Updated to use params
           className="px-4 py-2 bg-[#1A365D] text-white rounded-lg hover:bg-[#2D4E6E] transition-colors"
         >
           Create New
