@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>欢迎来到 AI 内容发布平台</h2>
+    <p>请从左侧菜单选择一个模块开始。</p>
+    <p>或者，您可以 <a href="{{ url_for('login') }}">登录</a> 或 <a href="{{ url_for('register') }}">注册</a>.</p>
+{% endblock %}

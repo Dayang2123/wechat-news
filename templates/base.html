@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title if title else "AI Content Publisher" }} - AI Publisher</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- You might want to add a CSS framework like Bootstrap or Tailwind CSS later -->
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>AI Publisher</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{{ url_for('dashboard') }}">数据仪表盘</a></li>
+                    <li><a href="{{ url_for('api_config_view') }}">AI API 配置</a></li>
+                    <li><a href="{{ url_for('news_source_management_view') }}">资讯网站管理</a></li>
+                    <li><a href="{{ url_for('crawled_content_view') }}">AI抓取资讯</a></li>
+                    <li><a href="{{ url_for('drafts_view') }}">草稿箱</a></li>
+                    <li><a href="{{ url_for('published_articles_view') }}">已发布文章</a></li>
+                    <li><a href="{{ url_for('user_management_view') }}">用户账号管理</a></li>
+                    <li><a href="{{ url_for('system_logs_view') }}">系统日志</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                {% if current_user.is_authenticated %}
+                    <p>用户: {{ current_user.username }}</p>
+                    <p><a href="{{ url_for('logout') }}">登出</a></p>
+                {% else %}
+                    <p><a href="{{ url_for('login') }}">登录</a> | <a href="{{ url_for('register') }}">注册</a></p>
+                {% endif %}
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="main-header">
+                <h1>{{ title if title else "Welcome" }}</h1>
+            </header>
+            <section class="content-area">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <ul class="flash-messages">
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

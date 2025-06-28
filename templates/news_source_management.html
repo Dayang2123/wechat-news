@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>此处用于添加和管理抓取目标的资讯网站列表。</p>
+    <!-- Add form for adding/editing news sources later -->
+    <table>
+        <thead>
+            <tr>
+                <th>网站名称</th>
+                <th>网址</th>
+                <th>描述</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Example Row - Data will come from backend later -->
+            <tr>
+                <td>示例新闻网</td>
+                <td>http://example.com/news</td>
+                <td>一个综合新闻网站</td>
+                <td><a href="#">编辑</a> | <a href="#">删除</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <button>添加新的资讯网站</button>
+{% endblock %}
