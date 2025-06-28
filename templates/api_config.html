@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>此处用于管理和配置国内外主流AI模型的API Key。</p>
+    <!-- Add form for adding/editing API keys later -->
+    <table>
+        <thead>
+            <tr>
+                <th>平台名称</th>
+                <th>API Key (部分显示)</th>
+                <th>其他配置</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Example Row - Data will come from backend later -->
+            <tr>
+                <td>OpenAI</td>
+                <td>sk-xxxx...xxxx</td>
+                <td>gpt-4</td>
+                <td><a href="#">编辑</a> | <a href="#">删除</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <button>添加新的API配置</button>
+{% endblock %}

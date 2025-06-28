@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ title }}</h2>
+    <form method="POST" action="{{ url_for('register') }}" novalidate>
+        {{ form.hidden_tag() }} {# CSRF token #}
+        <div>
+            {{ form.username.label }}<br>
+            {{ form.username(size=32) }}<br>
+            {% for error in form.username.errors %}
+            <span style="color: red; font-size: 0.9em;">[{{ error }}]</span><br>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.email.label }}<br>
+            {{ form.email(size=32) }}<br>
+            {% for error in form.email.errors %}
+            <span style="color: red; font-size: 0.9em;">[{{ error }}]</span><br>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.password.label }}<br>
+            {{ form.password(size=32) }}<br>
+            {% for error in form.password.errors %}
+            <span style="color: red; font-size: 0.9em;">[{{ error }}]</span><br>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.password2.label }}<br>
+            {{ form.password2(size=32) }}<br>
+            {% for error in form.password2.errors %}
+            <span style="color: red; font-size: 0.9em;">[{{ error }}]</span><br>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+    <p>已有账户? <a href="{{ url_for('login') }}">点此登录</a></p>
+{% endblock %}

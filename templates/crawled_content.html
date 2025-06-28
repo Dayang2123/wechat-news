@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>这里展示通过AI抓取的资讯，包括标题、正文、图片、日期、来源网址、作者等。</p>
+    <!-- Add filters and table for crawled content later -->
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all"></th>
+                <th>标题</th>
+                <th>来源</th>
+                <th>抓取日期</th>
+                <th>作者</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Example Row - Data will come from backend later -->
+            <tr>
+                <td><input type="checkbox" class="select-item"></td>
+                <td>示例抓取文章标题</td>
+                <td>示例新闻网</td>
+                <td>2023-10-27</td>
+                <td>AI Bot</td>
+                <td><a href="#">查看详情</a> | <a href="#">生成草稿</a> | <a href="#">删除</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <button>批量删除</button>
+    <button>批量生成草稿</button>
+{% endblock %}

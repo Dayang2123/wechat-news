@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>这里是AI生成的草稿箱，可以对内容进行编辑、预览和发布。</p>
+    <!-- Add filters and table for draft articles later -->
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all-drafts"></th>
+                <th>草稿标题</th>
+                <th>基于原文 (可选)</th>
+                <th>创建日期</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Example Row - Data will come from backend later -->
+            <tr>
+                <td><input type="checkbox" class="select-item-draft"></td>
+                <td>AI生成的示例文章标题</td>
+                <td>示例抓取文章标题</td>
+                <td>2023-10-27</td>
+                <td>草稿</td>
+                <td><a href="#">编辑</a> | <a href="#">预览</a> | <a href="#">发布到公众号</a> | <a href="#">删除</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <button>批量删除</button>
+    <button>批量发布</button>
+{% endblock %}

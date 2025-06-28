@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>此处用于管理系统用户账号。</p>
+    <!-- Add form for adding/editing users later -->
+    <table>
+        <thead>
+            <tr>
+                <th>用户名</th>
+                <th>是否管理员</th>
+                <th>注册时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Example Row - Data will come from backend later -->
+            <tr>
+                <td>admin_user</td>
+                <td>是</td>
+                <td>2023-01-01</td>
+                <td><a href="#">编辑</a> | <a href="#">删除</a></td>
+            </tr>
+            <tr>
+                <td>normal_user</td>
+                <td>否</td>
+                <td>2023-02-15</td>
+                <td><a href="#">编辑</a> | <a href="#">删除</a></td>
+            </tr>
+        </tbody>
+    </table>
+    <button>添加新用户</button>
+{% endblock %}
